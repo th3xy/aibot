@@ -133,7 +133,7 @@ const handleFormSubmit = (e) => {
   const isAboutMe = lowerCaseMessage.includes("rohan") || lowerCaseMessage.includes("safayed") || lowerCaseMessage.includes("synaturix") || lowerCaseMessage.includes("founder");
 
   if (isAboutMe) {
-    const aboutMeText = `👋 I'm Safayed Ahmed Rohan —\n\n🧠 Creator & Founder of SYNATURIX.\n💻 Passionate about AI, Web Development, and learning new things.\n📍 From: Bangladesh\n🔗 GitHub Project: https://th3xy.github.io/Ai/\n📁 GitHub Repo: https://github.com/th3xy/Ai\n🌐 Facebook: https://www.facebook.com/rohan.Oppenheimer\n📸 Instagram: https://www.instagram.com/rohan.thex\n📅 Created: 2025`;
+    const aboutMeText = `👋 I'm Safayed Ahmed Rohan —\n\n🧠 Creator & Founder of SYNATURIX.\n💻 Passionate about AI, Web Development, and learning new things.\n📍 From: Bangladesh\n🌐 Facebook: https://www.facebook.com/rohan.Oppenheimer\n📸 Instagram: https://www.instagram.com/rohan.thex\n📅 Created: 14 May 2025`;
 
     const userMsgDiv = createMessageElement(`<p class="message-text">${userMessage}</p>`, "user-message");
     chatsContainer.appendChild(userMsgDiv);
