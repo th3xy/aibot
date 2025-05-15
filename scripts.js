@@ -201,10 +201,6 @@ document.querySelector("#stop-response-btn").addEventListener("click", () => {
   document.body.classList.remove("bot-responding");
 });
 
-themeToggleBtn.addEventListener("click", () => {
-  const isLight = document.body.classList.toggle("light-theme");
-  localStorage.setItem("themeColor", isLight ? "light_mode" : "dark_mode");
-  themeToggleBtn.textContent = isLight ? "dark_mode" : "light_mode";
 });
 
 document.querySelector("#delete-chats-btn").addEventListener("click", () => {
