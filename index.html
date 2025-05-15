@@ -10,19 +10,33 @@
 
   <!-- Local CSS -->
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    .caret {
+      animation: blink 1s step-end infinite;
+      color: #00ff99;
+    }
+    @keyframes blink {
+      from, to { opacity: 1 }
+      50% { opacity: 0 }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <!-- App Header -->
     <header class="app-header">
-      <h1 class="heading">Hello, there</h1>
-      <h4 class="sub-heading">This is the first ai by Rohan.</h4>
+      <h1 class="heading">SYNATURIX <span class="caret">▌</span></h1>
+      <h4 class="sub-heading">This is the first AI Model by Rohan.</h4>
+      <h6>Some bugs may appear during use. We're working on fixing them in future updates.</h6>
     </header>
 
     <!-- Suggestions List -->
     <ul class="suggestions">
       <li class="suggestions-item">
-        <p class="text">"Some bugs may appear during use. We're working on fixing them in future updates."</p>
+        <p class="text">"Do you know who is the founder of Synaturix?"</p>
+        <h4>If the ans is no.</h4> 
+        <h5 class="text">then ask Synaturix</h5>
         <span class="icon material-symbols-rounded">draw</span>
       </li>
       <li class="suggestions-item">
