@@ -258,6 +258,7 @@ body {
 
   .prompt-form {
     height: 50px;
+    width: 40px;
   }
 
   .prompt-actions button {
