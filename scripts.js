@@ -1,4 +1,4 @@
-// SYNATURIX Chatbot Scripts.js with Custom About Info
+// SYNATURIX Chatbot Scripts.js — Greenish Futuristic Version by Rohan
 
 const container = document.querySelector(".container");
 const chatsContainer = document.querySelector(".chats-container");
@@ -16,39 +16,32 @@ let controller, typingInterval;
 let chatHistory = [];
 const userData = { message: "", file: {} };
 
-const isLightTheme = localStorage.getItem("themeColor") === "light_mode";
-document.body.classList.toggle("light-theme", isLightTheme);
-themeToggleBtn.textContent = isLightTheme ? "dark_mode" : "light_mode";
+document.body.classList.toggle("light-theme", localStorage.getItem("themeColor") === "light_mode");
+themeToggleBtn.textContent = document.body.classList.contains("light-theme") ? "dark_mode" : "light_mode";
 
-const loadChatHistory = () => {
+window.addEventListener("load", () => {
   const savedChats = localStorage.getItem("chatHistory");
   if (savedChats) {
     chatHistory = JSON.parse(savedChats);
     renderChatHistory();
   }
-  toggleSuggestions();
-};
-
-const saveChatHistory = () => {
-  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-};
-
-const toggleSuggestions = () => {
   suggestions.style.display = chatHistory.length === 0 ? "flex" : "none";
-};
+});
+
+const saveChatHistory = () => localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
 
 const renderChatHistory = () => {
   chatsContainer.innerHTML = "";
-  chatHistory.forEach((chat) => {
+  chatHistory.forEach(chat => {
     if (chat.role === "user") {
-      const userMsgHTML = `<p class="message-text">${chat.parts[0].text}</p>
-        ${chat.parts[1]?.inline_data ? `<img src="data:${chat.parts[1].inline_data.mime_type};base64,${chat.parts[1].inline_data.data}" class="img-attachment" />` : ""}`;
-      const userMsgDiv = createMessageElement(userMsgHTML, "user-message");
-      chatsContainer.appendChild(userMsgDiv);
+      const filePart = chat.parts[1]?.inline_data;
+      const userMsg = `<p class="message-text">${chat.parts[0].text}</p>` +
+        (filePart ? `<img src="data:${filePart.mime_type};base64,${filePart.data}" class="img-attachment" />` : "");
+      chatsContainer.appendChild(createMessageElement(userMsg, "user-message"));
     } else if (chat.role === "model") {
-      const botMsgHTML = `<img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" /> <p class="message-text">${chat.parts[0].text}</p>`;
-      const botMsgDiv = createMessageElement(botMsgHTML, "bot-message");
-      chatsContainer.appendChild(botMsgDiv);
+      const botMsg = `<img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" />
+        <p class="message-text">${chat.parts[0].text}</p>`;
+      chatsContainer.appendChild(createMessageElement(botMsg, "bot-message"));
     }
   });
   scrollToBottom();
@@ -62,31 +55,27 @@ const createMessageElement = (content, ...classes) => {
 };
 
 const scrollToBottom = () => {
-  const isScrolledToBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 50;
-  if (isScrolledToBottom) {
-    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
-  }
+  container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
 };
 
-const typingEffect = (text, textElement, botMsgDiv) => {
-  textElement.textContent = "";
+const typingEffect = (text, element, wrapper) => {
+  element.textContent = "";
   const words = text.split(" ");
-  let wordIndex = 0;
-
+  let i = 0;
   typingInterval = setInterval(() => {
-    if (wordIndex < words.length) {
-      textElement.textContent += (wordIndex === 0 ? "" : " ") + words[wordIndex++];
+    if (i < words.length) {
+      element.textContent += (i === 0 ? "" : " ") + words[i++];
       scrollToBottom();
     } else {
       clearInterval(typingInterval);
-      botMsgDiv.classList.remove("loading");
+      wrapper.classList.remove("loading");
       document.body.classList.remove("bot-responding");
     }
   }, 40);
 };
 
-const generateResponse = async (botMsgDiv) => {
-  const textElement = botMsgDiv.querySelector(".message-text");
+const generateResponse = async (botDiv) => {
+  const textEl = botDiv.querySelector(".message-text");
   controller = new AbortController();
 
   chatHistory.push({
@@ -94,29 +83,26 @@ const generateResponse = async (botMsgDiv) => {
     parts: [
       { text: userData.message },
       ...(userData.file.data ? [{ inline_data: (({ fileName, isImage, ...rest }) => rest)(userData.file) }] : [])
-    ],
+    ]
   });
 
   try {
-    const response = await fetch(API_URL, {
+    const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contents: chatHistory }),
-      signal: controller.signal,
+      signal: controller.signal
     });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error.message);
-
-    const responseText = data.candidates[0].content.parts[0].text.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
-    typingEffect(responseText, textElement, botMsgDiv);
-
-    chatHistory.push({ role: "model", parts: [{ text: responseText }] });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error.message);
+    const result = data.candidates[0].content.parts[0].text.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
+    typingEffect(result, textEl, botDiv);
+    chatHistory.push({ role: "model", parts: [{ text: result }] });
     saveChatHistory();
-  } catch (error) {
-    textElement.textContent = error.name === "AbortError" ? "Response generation stopped." : error.message;
-    textElement.style.color = "#d62939";
-    botMsgDiv.classList.remove("loading");
+  } catch (err) {
+    textEl.textContent = err.name === "AbortError" ? "⛔ Response generation stopped." : err.message;
+    textEl.style.color = "#d62939";
+    botDiv.classList.remove("loading");
     document.body.classList.remove("bot-responding");
     scrollToBottom();
   } finally {
@@ -126,14 +112,14 @@ const generateResponse = async (botMsgDiv) => {
 
 const handleFormSubmit = (e) => {
   e.preventDefault();
-  const userMessage = promptInput.value.trim();
-  if (!userMessage || document.body.classList.contains("bot-responding")) return;
+  const msg = promptInput.value.trim();
+  if (!msg || document.body.classList.contains("bot-responding")) return;
 
-  const lowerCaseMessage = userMessage.toLowerCase();
-  const isAboutMe = lowerCaseMessage.includes("rohan") || lowerCaseMessage.includes("safayed") || lowerCaseMessage.includes("synaturix") || lowerCaseMessage.includes("founder");
+  const keywords = ["rohan", "safayed", "synaturix", "founder"];
+  const isAbout = keywords.some(word => msg.toLowerCase().includes(word));
 
-  if (isAboutMe) {
-    const aboutMeText = `👋 I'm Safayed Ahmed Rohan —
+  if (isAbout) {
+    const about = `👋 I'm Safayed Ahmed Rohan —
 
 🧠 Creator & Founder of SYNATURIX.
 💻 Passionate about AI, Web Development, and learning new things.
@@ -141,59 +127,65 @@ const handleFormSubmit = (e) => {
 🌐 Facebook: https://www.facebook.com/rohan.Oppenheimer
 📸 Instagram: https://www.instagram.com/rohan.thex
 📅 Created: 2025`;
-
-    const userMsgDiv = createMessageElement(`<p class="message-text">${userMessage}</p>`, "user-message");
-    chatsContainer.appendChild(userMsgDiv);
-
-    const botMsgDiv = createMessageElement(
-      `<img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" /> <p class="message-text">${aboutMeText}</p>`,
+    chatsContainer.appendChild(createMessageElement(`<p class="message-text">${msg}</p>`, "user-message"));
+    chatsContainer.appendChild(createMessageElement(
+      `<img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" />
+      <p class="message-text">${about}</p>`,
       "bot-message"
-    );
-    chatsContainer.appendChild(botMsgDiv);
-
+    ));
     promptInput.value = "";
     scrollToBottom();
     return;
   }
 
-  userData.message = userMessage;
+  // Include system date & time for AI
+const now = new Date();
+const dateStr = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+userData.message = `Current date: ${dateStr}\nCurrent time: ${timeStr}\n\nUser input: ${msg}`;
+
   promptInput.value = "";
   document.body.classList.add("chats-active", "bot-responding");
   fileUploadWrapper.classList.remove("file-attached", "img-attached", "active");
 
-  const userMsgHTML = `<p class="message-text"></p>
-    ${userData.file.data ? (userData.file.isImage ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="img-attachment" />` : `<p class="file-attachment"><span class="material-symbols-rounded">description</span>${userData.file.fileName}</p>`) : ""}`;
+  const userHTML = `<p class="message-text">${msg}</p>` +
+    (userData.file.data
+      ? userData.file.isImage
+        ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="img-attachment" />`
+        : `<p class="file-attachment"><span class="material-symbols-rounded">description</span>${userData.file.fileName}</p>`
+      : "");
 
-  const userMsgDiv = createMessageElement(userMsgHTML, "user-message");
-  userMsgDiv.querySelector(".message-text").textContent = userData.message;
-  chatsContainer.appendChild(userMsgDiv);
-  scrollToBottom();
-
-  chatHistory.push({ role: "user", parts: [{ text: userData.message }] });
-  toggleSuggestions();
+  chatsContainer.appendChild(createMessageElement(userHTML, "user-message"));
+  chatHistory.push({ role: "user", parts: [{ text: msg }] });
+  suggestions.style.display = "none";
 
   setTimeout(() => {
-    const botMsgHTML = `<img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" /> <p class="message-text">Just a sec...</p>`;
-    const botMsgDiv = createMessageElement(botMsgHTML, "bot-message", "loading");
-    chatsContainer.appendChild(botMsgDiv);
+    const botHTML = `<img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" />
+      <p class="message-text">Just a sec...</p>`;
+    const botDiv = createMessageElement(botHTML, "bot-message", "loading");
+    chatsContainer.appendChild(botDiv);
     scrollToBottom();
-    generateResponse(botMsgDiv);
+    generateResponse(botDiv);
   }, 600);
 };
+
+promptForm.addEventListener("submit", handleFormSubmit);
+promptForm.querySelector("#add-file-btn").addEventListener("click", () => fileInput.click());
 
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
   if (!file) return;
   const isImage = file.type.startsWith("image/");
   const reader = new FileReader();
-  reader.readAsDataURL(file);
   reader.onload = (e) => {
     fileInput.value = "";
-    const base64String = e.target.result.split(",")[1];
+    const base64 = e.target.result.split(",")[1];
     fileUploadWrapper.querySelector(".file-preview").src = e.target.result;
     fileUploadWrapper.classList.add("active", isImage ? "img-attached" : "file-attached");
-    userData.file = { fileName: file.name, data: base64String, mime_type: file.type, isImage };
+    userData.file = { fileName: file.name, data: base64, mime_type: file.type, isImage };
   };
+  reader.readAsDataURL(file);
 });
 
 document.querySelector("#cancel-file-btn").addEventListener("click", () => {
@@ -205,14 +197,14 @@ document.querySelector("#stop-response-btn").addEventListener("click", () => {
   controller?.abort();
   userData.file = {};
   clearInterval(typingInterval);
-  chatsContainer.querySelector(".bot-message.loading")?.classList.remove("loading");
+  document.querySelector(".bot-message.loading")?.classList.remove("loading");
   document.body.classList.remove("bot-responding");
 });
 
 themeToggleBtn.addEventListener("click", () => {
-  const isLightTheme = document.body.classList.toggle("light-theme");
-  localStorage.setItem("themeColor", isLightTheme ? "light_mode" : "dark_mode");
-  themeToggleBtn.textContent = isLightTheme ? "dark_mode" : "light_mode";
+  const isLight = document.body.classList.toggle("light-theme");
+  localStorage.setItem("themeColor", isLight ? "light_mode" : "dark_mode");
+  themeToggleBtn.textContent = isLight ? "dark_mode" : "light_mode";
 });
 
 document.querySelector("#delete-chats-btn").addEventListener("click", () => {
@@ -220,25 +212,20 @@ document.querySelector("#delete-chats-btn").addEventListener("click", () => {
   localStorage.removeItem("chatHistory");
   chatsContainer.innerHTML = "";
   document.body.classList.remove("chats-active", "bot-responding");
-  toggleSuggestions();
+  suggestions.style.display = "flex";
 });
 
-document.querySelectorAll(".suggestions-item").forEach((suggestion) => {
-  suggestion.addEventListener("click", () => {
-    promptInput.value = suggestion.querySelector(".text").textContent;
+document.querySelectorAll(".suggestions-item").forEach((item) => {
+  item.addEventListener("click", () => {
+    promptInput.value = item.querySelector(".text").textContent;
     promptForm.dispatchEvent(new Event("submit"));
   });
 });
 
 document.addEventListener("click", ({ target }) => {
   const wrapper = document.querySelector(".prompt-wrapper");
-  const shouldHide = target.classList.contains("prompt-input") ||
-    (wrapper.classList.contains("hide-controls") &&
-      (target.id === "add-file-btn" || target.id === "stop-response-btn"));
-  wrapper.classList.toggle("hide-controls", shouldHide);
+  const inputClicked = target.classList.contains("prompt-input");
+  const hiddenControls = wrapper.classList.contains("hide-controls");
+  const isClickAllowed = target.id === "add-file-btn" || target.id === "stop-response-btn";
+  wrapper.classList.toggle("hide-controls", inputClicked || (hiddenControls && isClickAllowed));
 });
-
-promptForm.addEventListener("submit", handleFormSubmit);
-promptForm.querySelector("#add-file-btn").addEventListener("click", () => fileInput.click());
-
-window.addEventListener("load", loadChatHistory);
