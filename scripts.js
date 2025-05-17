@@ -1,4 +1,4 @@
-// SYNATURIX Chatbot Scripts.js — Greenish Futuristic Version by Rohan
+// SYNATURIX Chatbot Scripts.js — Gemini 2.0 + News API Integrated by ChatGPT
 
 const container = document.querySelector(".container");
 const chatsContainer = document.querySelector(".chats-container");
@@ -9,8 +9,9 @@ const fileUploadWrapper = promptForm.querySelector(".file-upload-wrapper");
 const themeToggleBtn = document.querySelector("#theme-toggle-btn");
 const suggestions = document.querySelector(".suggestions");
 
-const API_KEY = "AIzaSyAqOt4CDfr0lrkxSDl20HKgYWJ0uHHS7rE";
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+const GEMINI_API_KEY = "AIzaSyCrg8NhCephOwYww3CMRMT-sHireNQTfM4";
+const NEWS_API_KEY = "baf4e2ba58c24910b913b53cdad4f5bb";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 let controller, typingInterval;
 let chatHistory = [];
@@ -74,6 +75,17 @@ const typingEffect = (text, element, wrapper) => {
   }, 40);
 };
 
+const isNewsQuery = (text) => {
+  const keywords = ["latest news", "breaking news", "today's news", "top headlines", "world news", "international news"];
+  return keywords.some(k => text.toLowerCase().includes(k));
+};
+
+const fetchNews = async () => {
+  const res = await fetch(`https://newsapi.org/v2/top-headlines?country=us&pageSize=3&apiKey=${NEWS_API_KEY}`);
+  const data = await res.json();
+  return data.articles?.map(i => `📰 ${i.title}\n🔗 ${i.url}\n${i.description}`).join("\\n\\n") || "No news found.";
+};
+
 const generateResponse = async (botDiv) => {
   const textEl = botDiv.querySelector(".message-text");
   controller = new AbortController();
@@ -87,15 +99,22 @@ const generateResponse = async (botDiv) => {
   });
 
   try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: chatHistory }),
-      signal: controller.signal
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error.message);
-    const result = data.candidates[0].content.parts[0].text.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
+    let result;
+
+    if (isNewsQuery(userData.message)) {
+      result = await fetchNews();
+    } else {
+      const res = await fetch(GEMINI_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: chatHistory }),
+        signal: controller.signal
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error.message);
+      result = data.candidates[0].content.parts[0].text.replace(/\\*\\*([^*]+)\\*\\*/g, "$1").trim();
+    }
+
     typingEffect(result, textEl, botDiv);
     chatHistory.push({ role: "model", parts: [{ text: result }] });
     saveChatHistory();
@@ -119,7 +138,7 @@ const handleFormSubmit = (e) => {
   const isAbout = keywords.some(word => msg.toLowerCase().includes(word));
 
   if (isAbout) {
-    const about = `👋 I'm Safayed Ahmed Rohan —
+  const about = `👋 I'm Safayed Ahmed Rohan —
 
 🧠 Creator & Founder of SYNATURIX.
 💻 Passionate about AI, Web Development, and learning new things.
@@ -127,25 +146,31 @@ const handleFormSubmit = (e) => {
 🌐 Facebook: https://www.facebook.com/rohan.Oppenheimer
 📸 Instagram: https://www.instagram.com/rohan.thex
 📅 Created: 2025`;
-    chatsContainer.appendChild(createMessageElement(`<p class="message-text">${msg}</p>`, "user-message"));
-    chatsContainer.appendChild(createMessageElement(
-      `<img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" />
-      <p class="message-text">${about}</p>`,
-      "bot-message"
-    ));
-    promptInput.value = "";
-    scrollToBottom();
-    return;
-  }
 
-  // Include system date & time for AI
-const now = new Date();
-const dateStr = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  chatsContainer.appendChild(createMessageElement(`<p class="message-text">${msg}</p>`, "user-message"));
 
-userData.message = `Current date: ${dateStr}\nCurrent time: ${timeStr}\n\nUser input: ${msg}`;
+  const botHTML = `<img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png" />
+    <p class="message-text">Just a sec...</p>`;
+  const botDiv = createMessageElement(botHTML, "bot-message", "loading");
+  chatsContainer.appendChild(botDiv);
+  scrollToBottom();
+
+  setTimeout(() => {
+    typingEffect(about, botDiv.querySelector(".message-text"), botDiv);
+  }, 800);
 
   promptInput.value = "";
+  return;
+}
+
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+  userData.message = `Current date: ${dateStr}\\nCurrent time: ${timeStr}\\n\\nUser input: ${msg}`;
+  promptInput.value = "";
+
   document.body.classList.add("chats-active", "bot-responding");
   fileUploadWrapper.classList.remove("file-attached", "img-attached", "active");
 
