@@ -9,7 +9,7 @@ const fileUploadWrapper = promptForm.querySelector(".file-upload-wrapper");
 const themeToggleBtn = document.querySelector("#theme-toggle-btn");
 const suggestions = document.querySelector(".suggestions");
 
-const GEMINI_API_KEY = "AIzaSyCrg8NhCephOwYww3CMRMT-sHireNQTfM4";
+const GEMINI_API_KEY = "AIzaSyD2oF1WGAqfZPHNIsXfgQfB3Crl0ZSJ95o";
 const NEWS_API_KEY = "baf4e2ba58c24910b913b53cdad4f5bb";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
