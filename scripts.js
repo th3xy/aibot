@@ -134,11 +134,11 @@ const handleFormSubmit = (e) => {
   const msg = promptInput.value.trim();
   if (!msg || document.body.classList.contains("bot-responding")) return;
 
-  const keywords = ["rohan", "safayed", "synaturix", "founder"];
+  const keywords = ["rohan", "safayed", "synaturix", "founder of synaturix", "রোহান", "ছাফায়েদ আহমেদ রোহান"];
   const isAbout = keywords.some(word => msg.toLowerCase().includes(word));
 
   if (isAbout) {
-  const about = `👋 I'm Safayed Ahmed Rohan —
+  const about = `👋 Safayed Ahmed Rohan —
 
 🧠 Creator & Founder of SYNATURIX.
 💻 Passionate about AI, Web Development, and learning new things.
